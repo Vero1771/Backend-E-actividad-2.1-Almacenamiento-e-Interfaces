@@ -1,0 +1,63 @@
+<%-include("../components/head.ejs")%>
+<body>
+    <%-include("../components/nav.ejs")%>
+    <main>
+      <h1><%= title %>: <%= peli.titulo %></h1>
+
+      <form class="formEntidad" action="/peliculas/editar/<%= peli.id %>?_method=PUT" method="post">
+          <label>Título
+              <input type="text" name="titulo" value="<%= peli.titulo %>" required>
+          </label><br>
+
+          <label>Año
+              <input type="number" name="anio" value="<%= peli.anio %>" required>
+          </label><br>
+
+          <label>Duración
+              <input type="number" name="duracion" value="<%= peli.duracion %>" required>
+          </label><br>
+
+          <label id="clasificacion">Clasificación
+            <input type="text" value="<%= peli.clasificacion %>" name="clasificacion" required>
+          </label><br>
+
+          <div>
+            <label id="clasificacion">Categoría</label><br>
+
+              <label>
+                Acción
+                <input type="checkbox" value="Acción" name="categoria" 
+                <%= peli.categoria.includes('Acción') ? 'checked' : '' %>>
+              </label><br>
+
+              <label>
+                Aventura
+                <input type="checkbox" value="Aventura" name="categoria" 
+                <%= peli.categoria.includes('Aventura') ? 'checked' : '' %>>
+              </label><br>
+
+              <label>
+                Ciencia Ficción
+                <input type="checkbox" value="Ciencia Ficción" name="categoria"
+                <%= peli.categoria.includes('Ciencia Ficción') ? 'checked' : '' %>>
+              </label><br>
+
+              <label>
+                Comedia
+                <input type="checkbox" value="Comedia" name="categoria"
+                <%= peli.categoria.includes('Comedia') ? 'checked' : '' %>>
+              </label><br>
+              
+              <label>
+                Drama
+                <input type="checkbox" value="Drama" name="categoria"
+                <%= peli.categoria.includes('Drama') ? 'checked' : '' %>>
+              </label><br>
+
+          </div>
+
+          <input type="submit" value="Guardar Cambios">
+      </form>
+    </main>
+</body>
+<%-include("../components/footer.ejs")%>
