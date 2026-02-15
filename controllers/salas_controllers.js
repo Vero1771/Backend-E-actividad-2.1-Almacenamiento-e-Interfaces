@@ -1,15 +1,15 @@
 const Salas_Model = require('../models/salas_models');
-let result;
 
 class SalasController {
-  mostrar_salas() {
-    result = Salas_Model.mostrar_salas();
-    return result;
+  static mostrar_salas() {
+    return Salas_Model.mostrar_salas().then(r => r).catch(err => err);
   }
-  ingresar_sala(sala) {
-    result = Salas_Model.ingresar_sala(sala);
-    return result;
+  static mostrar_salas_por_id(id) {
+    return Salas_Model.mostrar_salas_por_id(id).then(r => r).catch(err => err);
+  }
+  static ingresar_sala(sala) {
+    return Salas_Model.ingresar_sala(sala).then(r => r).catch(err => err);
   }
 }
 
-module.exports = new SalasController();
+module.exports = SalasController;

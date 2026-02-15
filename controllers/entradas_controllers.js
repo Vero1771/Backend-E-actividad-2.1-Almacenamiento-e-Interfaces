@@ -1,15 +1,15 @@
 const Entradas_Model = require('../models/entradas_models');
-let result;
 
 class EntradasController {
-  mostrar_entradas() {
-    result = Entradas_Model.mostrar_entradas();
-    return result;
+  static mostrar_entradas() {
+    return Entradas_Model.mostrar_entradas().then(r => r).catch(err => err);
   }
-  ingresar_entrada(entrada) {
-    result = Entradas_Model.ingresar_entrada(entrada);
-    return result;
+  static mostrar_entradas_por_id(id) {
+    return Entradas_Model.mostrar_entradas_por_id(id).then(r => r).catch(err => err);
+  }
+  static ingresar_entrada(entrada) {
+    return Entradas_Model.ingresar_entrada(entrada).then(r => r).catch(err => err);
   }
 }
 
-module.exports = new EntradasController();
+module.exports = EntradasController;
