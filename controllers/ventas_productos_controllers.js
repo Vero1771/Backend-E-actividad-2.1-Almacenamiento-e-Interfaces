@@ -1,15 +1,15 @@
 const Ventas_Productos_Model = require('../models/ventas_productos_models');
-let result;
 
 class VentasProductosController {
-  mostrar_productos_vendidos() {
-    result = Ventas_Productos_Model.mostrar_productos_vendidos();
-    return result;
+  static mostrar_productos_vendidos() {
+    return Ventas_Productos_Model.mostrar_productos_vendidos().then(r => r).catch(err => err);
   }
-  ingresar_producto_vendido(producto) {
-    result = Ventas_Productos_Model.ingresar_producto_vendido(producto);
-    return result;
+  static mostrar_productos_vendidos_por_id(id) {
+    return Ventas_Productos_Model.mostrar_productos_vendidos_por_id(id).then(r => r).catch(err => err);
+  }
+  static ingresar_producto_vendido(producto) {
+    return Ventas_Productos_Model.ingresar_producto_vendido(producto).then(r => r).catch(err => err);
   }
 }
 
-module.exports = new VentasProductosController();
+module.exports = VentasProductosController;
