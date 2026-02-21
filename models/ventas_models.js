@@ -1,19 +1,15 @@
-const ventas = require('../db/ventas');
+const pool = require('../db/connection_db');
 
 class VentasModel {
-  _validarDatos(venta) {
+  static _validarDatos(venta) {
     const errors = [];
-    const camposObligatorios = ['metodo_pago', 'total', 'fecha'];
+    const camposObligatorios = ['id_metodo', 'total', 'fecha'];
     for (const campo of camposObligatorios) {
       if (venta[campo] === undefined || venta[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
     }
 
-    if (typeof(venta.metodo_pago) !== "string") {
-      errors.push("El método de pago de la venta debe ser una cadena de texto");
-    }
-    
-    if (isNaN(venta.total) || venta.total < 0) {
-      errors.push("El total de la venta debe ser un número válido");
+    if (isNaN(venta.id_metodo) || venta.id_metodo < 0 || isNaN(venta.total) || venta.total < 0) {
+      errors.push("El total de la venta y el id del método de pago deben ser números válidos");
     }
 
     const fecha = new Date(venta.fecha);
@@ -24,88 +20,97 @@ class VentasModel {
 
     return errors;
   }
-  mostrar_ventas_por_rango(rango) {
+  static _validarRangoDeFecha(rango) {
+    const errors = [];
+    const { inicio, fin } = rango;
 
     //Verificar que hay fecha de inicio y fin
-    const { inicio, fin } = rango;
     if (!inicio || !fin) {
-      return {
-        code: 400,
-        message: "Falta el rango de fechas",
-        result: []
-      };
+      errors.push("Falta el rango de fechas");
+      return errors;
     }
 
-    if (ventas.length > 0) {
+    const fechaInicio = new Date(inicio);
+    const fechaFin = new Date(fin);
 
-      const fechaInicio = new Date(inicio);
-      const fechaFin = new Date(fin);
-
-      // Validar el formato de la fecha 
-      if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
-        return {
-          code: 400,
-          message: "El formato de la fecha es inválido",
-          result: []
-        };
-      }
-
-      // Validar que la Fecha de Inicio sea mayor
-      if (fechaInicio > fechaFin) {
-        return {
-          code: 400,
-          message: "La fecha de inicio no puede ser mayor a la fecha de fin",
-          result: []
-        };
-      }
-
-      const ventasRecientes = ventas.filter(venta => {
-        const soloFechaVenta = venta.fecha.split(' ')[0];
-        return soloFechaVenta >= inicio && soloFechaVenta <= fin;
-      }).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-      return {
-        code: 200,
-        message: "consulta completada con éxito",
-        result: ventasRecientes
-      };
-
-    } else {
-      return {
-        code: 404,
-        message: "no hay ventas registradas",
-        result: []
-      };
+    // Validar el formato de la fecha 
+    if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
+      errors.push("El formato de la fecha es inválido");
+      return errors;
     }
+
+    // Validar que la Fecha de Inicio sea mayor
+    if (fechaInicio > fechaFin) {
+      errors.push("La fecha de inicio no puede ser mayor a la fecha de fin");
+      return errors;
+    }
+
+    return errors;
   }
-  ingresar_venta(venta) {
-    const error = this._validarDatos(venta);
-    if (error.length > 0) {
-      return {
-        code: 400,
-        message: "Ha ocurrido un problema al ingresar los datos",
-        result: error
-      };
-    }
-
-    let new_id;
-    if (ventas.length > 0) {
-      new_id = ventas[ventas.length - 1].id + 1;
-    } else {
-      new_id = 1;
-    }
-    ventas.push({
-      id: new_id,
-      fecha: venta.fecha,
-      total: Number(venta.total),
-      metodo_pago: venta.metodo_pago
+  static mostrar_ventas() {
+    return new Promise((resolve, reject) => {
+      pool.query('SELECT ventas.id_venta, ventas.id_metodo, metodos_pago.nombre AS "metodo_de_pago" , ventas.fecha, ventas.total FROM `ventas` JOIN `metodos_pago` ON metodos_pago.id_metodo = ventas.id_metodo ORDER BY ventas.id_venta;')
+        .then(([rows]) => {
+          resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
     });
-    return {
-      code: 200,
-      message: "venta agregada con éxito",
-      result: ventas
-    };
+  }
+  static mostrar_ventas_por_id(id) {
+    return new Promise((resolve, reject) => {
+      pool.query('SELECT ventas.id_venta, ventas.id_metodo, metodos_pago.nombre AS "metodo_de_pago" , ventas.fecha, ventas.total FROM `ventas` JOIN `metodos_pago` ON metodos_pago.id_metodo = ventas.id_metodo WHERE id_venta = ?', id)
+        .then(([rows]) => {
+          if (rows.length > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+          }
+          resolve({ code: 404, message: "no hay ventas registradas con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static mostrar_ventas_por_rango(rango) {
+    return new Promise((resolve, reject) => {
+
+      const error = VentasModel._validarRangoDeFecha(rango);
+      if (error.length > 0) {
+        reject({ code: 400, message: "Ha ocurrido un problema al ingresar el rango de fecha", result: error })
+        return;
+      }
+
+      const { inicio, fin } = rango;
+
+      pool.query('SELECT ventas.id_venta, ventas.id_metodo, metodos_pago.nombre AS "metodo_de_pago" , ventas.fecha, ventas.total FROM `ventas` JOIN `metodos_pago` ON metodos_pago.id_metodo = ventas.id_metodo  WHERE `fecha` BETWEEN ? AND ? ORDER BY `ventas`.`id_venta` ASC', [inicio, fin])
+        .then(([rows]) => {
+          if (rows.length > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+          }
+          resolve({ code: 404, message: "no hay ventas registradas con ese rango", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static ingresar_venta(venta) {
+    return new Promise((resolve, reject) => {
+      const error = VentasModel._validarDatos(venta);
+      if (error.length > 0) {
+        reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
+        return;
+      }
+      pool.query('INSERT INTO `ventas` SET ?', venta)
+        .then(([rows]) => {
+          resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
   }
 }
 
-module.exports = new VentasModel();
+module.exports = VentasModel;

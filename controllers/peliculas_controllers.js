@@ -1,27 +1,21 @@
 const Peliculas_Model = require('../models/peliculas_models');
-let result;
 
 class PeliculasController {
-  mostrar_peliculas() {
-    result = Peliculas_Model.mostrar_peliculas();
-    return result;
+  static mostrar_peliculas() {
+    return Peliculas_Model.mostrar_peliculas().then(r => r).catch(err => err);
   }
-  mostrar_peliculas_por_id(id) {
-    result = Peliculas_Model.mostrar_peliculas_por_id(id);
-    return result;
+  static mostrar_peliculas_por_id(id) {
+    return Peliculas_Model.mostrar_peliculas_por_id(id).then(r => r).catch(err => err);
   }
-  ingresar_pelicula(peli) {
-    result = Peliculas_Model.ingresar_pelicula(peli);
-    return result;
+  static ingresar_pelicula(peli, categorias) {
+    return Peliculas_Model.ingresar_pelicula(peli, categorias).then(r => r).catch(err => err);
   }
-  editar_pelicula(id, actualizar) {
-    result = Peliculas_Model.editar_pelicula(id, actualizar);
-    return result;
+  static editar_pelicula(id, actualizar, categorias) {
+    return Peliculas_Model.editar_pelicula(id, actualizar, categorias).then(r => r).catch(err => err);
   }
-  eliminar_pelicula(id) {
-    result = Peliculas_Model.eliminar_pelicula(id);
-    return result;
+  static eliminar_pelicula(id) {
+    return Peliculas_Model.eliminar_pelicula(id).then(r => r).catch(err => err);
   }
 }
 
-module.exports = new PeliculasController();
+module.exports = PeliculasController;

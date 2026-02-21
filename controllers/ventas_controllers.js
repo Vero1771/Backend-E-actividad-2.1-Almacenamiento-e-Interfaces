@@ -1,15 +1,18 @@
 const Ventas_Model = require('../models/ventas_models');
-let result;
 
 class VentasController {
-  mostrar_ventas_por_rango(rango) {
-    result = Ventas_Model.mostrar_ventas_por_rango(rango);
-    return result;
+  static mostrar_ventas() {
+    return Ventas_Model.mostrar_ventas().then(r => r).catch(err => err);
   }
-  ingresar_venta(venta) {
-    result = Ventas_Model.ingresar_venta(venta);
-    return result;
+  static mostrar_ventas_por_id(id) {
+    return Ventas_Model.mostrar_ventas_por_id(id).then(r => r).catch(err => err);
+  }
+  static mostrar_ventas_por_rango(rango) {
+    return Ventas_Model.mostrar_ventas_por_rango(rango).then(r => r).catch(err => err);
+  }
+  static ingresar_venta(venta) {
+    return Ventas_Model.ingresar_venta(venta).then(r => r).catch(err => err);
   }
 }
 
-module.exports = new VentasController();
+module.exports = VentasController;

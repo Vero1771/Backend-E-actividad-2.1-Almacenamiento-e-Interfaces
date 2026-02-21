@@ -1,27 +1,21 @@
 const Productos_Model = require('../models/productos_models');
-let result;
 
 class ProductosController {
-  mostrar_productos() {
-    result = Productos_Model.mostrar_productos();
-    return result;
+  static mostrar_productos() {
+    return Productos_Model.mostrar_productos().then(r => r).catch(err => err);
   }
-  mostrar_productos_por_id(id) {
-    result = Productos_Model.mostrar_productos_por_id(id);
-    return result;
+  static mostrar_productos_por_id(id) {
+    return Productos_Model.mostrar_productos_por_id(id).then(r => r).catch(err => err);
   }
-  ingresar_producto(producto) {
-    result = Productos_Model.ingresar_producto(producto);
-    return result;
+  static ingresar_producto(producto) {
+    return Productos_Model.ingresar_producto(producto).then(r => r).catch(err => err);
   }
-  editar_producto(id, actualizar) {
-    result = Productos_Model.editar_producto(id, actualizar);
-    return result;
+  static editar_producto(id, actualizar) {
+    return Productos_Model.editar_producto(id, actualizar).then(r => r).catch(err => err);
   }
-  eliminar_producto(id) {
-    result = Productos_Model.eliminar_producto(id);
-    return result;
+  static eliminar_producto(id) {
+    return Productos_Model.eliminar_producto(id).then(r => r).catch(err => err);
   }
 }
 
-module.exports = new ProductosController();
+module.exports = ProductosController;

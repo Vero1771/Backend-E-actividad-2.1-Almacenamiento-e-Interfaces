@@ -1,15 +1,14 @@
-const productos = require('../db/productos');
-const ventas_productos = require('../db/ventas_productos');
+const pool = require('../db/connection_db');
 
 class ProductosModel {
-  _validarDatos(producto) {
+  static _validarDatos(producto) {
     const errors = [];
     const camposObligatorios = ['nombre', 'cantidad', 'precio_unitario'];
     for (const campo of camposObligatorios) {
       if (producto[campo] === undefined || producto[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
     }
 
-    if (typeof(producto.nombre) !== "string") {
+    if (typeof (producto.nombre) !== "string") {
       errors.push("El nombre del producto debe ser una cadena de texto");
     }
 
@@ -19,151 +18,77 @@ class ProductosModel {
 
     return errors;
   }
-  mostrar_productos() {
-    if (productos.length > 0) {
-      return {
-        code: 200,
-        message: "consulta completada con éxito",
-        result: productos
-      };
-    } else {
-      return {
-        code: 404,
-        message: "no hay productos registrados",
-        result: []
-      };
-    }
-  }
-  mostrar_productos_por_id(id) {
-    if (productos.length > 0) {
-      const index = productos.findIndex(p => p.id === Number(id));
-      if (index !== -1) {
-        return {
-          code: 200,
-          message: "consulta completada con éxito",
-          result: productos[index]
-        };
-      } else {
-        return {
-          code: 404,
-          message: "no hay productos registrados con ese ID",
-          result: []
-        };
-      }
-    } else {
-      return {
-        code: 404,
-        message: "no hay productos registrados",
-        result: []
-      };
-    }
-  }
-  ingresar_producto(producto) {
-    const error = this._validarDatos(producto);
-    if (error.length > 0) {
-      return {
-        code: 400,
-        message: "Ha ocurrido un problema al ingresar los datos",
-        result: error
-      };
-    }
-
-    let new_id;
-    if (productos.length > 0) {
-      new_id = productos[productos.length - 1].id + 1;
-    } else {
-      new_id = 1;
-    }
-    productos.push({
-      id: new_id,
-      nombre: producto.nombre,
-      cantidad: Number(producto.cantidad),
-      precio_unitario: Number(producto.precio_unitario)
+  static mostrar_productos() {
+    return new Promise((resolve, reject) => {
+      pool.query('SELECT * FROM `productos`')
+        .then(([rows]) => {
+          resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
     });
-    return {
-      code: 200,
-      message: "producto agregado con éxito",
-      result: productos
-    };
   }
-  editar_producto(id, actualizar) {
-    if (productos.length > 0) {
-
-      const error = this._validarDatos(actualizar);
+  static mostrar_productos_por_id(id) {
+    return new Promise((resolve, reject) => {
+      pool.query('SELECT * FROM `productos` WHERE id_producto = ?', id)
+        .then(([rows]) => {
+          if (rows.length > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+          }
+          resolve({ code: 404, message: "no hay productos registrados con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static ingresar_producto(producto) {
+    return new Promise((resolve, reject) => {
+      const error = ProductosModel._validarDatos(producto);
       if (error.length > 0) {
-        return {
-          code: 400,
-          message: "Ha ocurrido un problema al ingresar los datos",
-          result: error
-        };
+        reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
+        return;
       }
-      
-      const index = productos.findIndex(p => p.id === Number(id));
-      if (index !== -1) {
-        productos[index] = actualizar;
-        productos[index].id = Number(id);
-        productos[index].cantidad = Number(actualizar.cantidad);
-        productos[index].precio_unitario = Number(actualizar.precio_unitario);
-        return {
-          code: 200,
-          message: "producto editado con éxito",
-          result: productos[index]
-        };
-      } else {
-        return {
-          code: 404,
-          message: "no hay productos registrados con ese ID",
-          result: []
-        };
-      }
-    } else {
-      return {
-        code: 404,
-        message: "no hay productos registrados",
-        result: []
-      };
-    }
+      pool.query('INSERT INTO `productos` SET ?', producto)
+        .then(([rows]) => {
+          resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
   }
-  eliminar_producto(id) {
-    if (productos.length > 0) {
-      const index = productos.findIndex(p => p.id === Number(id));
-      if (index !== -1) {
-
-        //Dejar en null las ventas de ese producto
-        let ventas_count = 0;
-        ventas_productos.forEach(venta => {
-          if (venta.id_producto === Number(id)) {
-            venta.id_producto = null;
-            ventas_count++;
-          }
-        });
-
-        //Eliminar el producto
-        productos.splice(index, 1);
-
-        return {
-          code: 200,
-          message: "producto eliminado con éxito",
-          result: {
-            ventasDesvinculadas: ventas_count,
-            data: productos
-          }
-        };
-      } else {
-        return {
-          code: 404,
-          message: "no hay productos registrados con ese ID",
-          result: []
-        };
+  static editar_producto(id, actualizar) {
+    return new Promise((resolve, reject) => {
+      const error = ProductosModel._validarDatos(actualizar);
+      if (error.length > 0) {
+        reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
+        return;
       }
-    } else {
-      return {
-        code: 404,
-        message: "no hay productos registrados",
-        result: []
-      };
-    }
+      pool.query('UPDATE `productos` SET ? WHERE `id_producto`= ?', [actualizar, id])
+        .then(([rows]) => {
+          resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static eliminar_producto(id) {
+    return new Promise((resolve, reject) => {
+      pool.query('DELETE FROM `productos` WHERE `id_producto` = ?', id)
+        .then(([rows]) => {
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+          }
+          resolve({ code: 404, message: "no hay productos registrados con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
   }
 }
 
-module.exports = new ProductosModel();
+module.exports = ProductosModel;
