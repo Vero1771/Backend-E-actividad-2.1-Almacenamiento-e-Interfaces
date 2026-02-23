@@ -30,6 +30,21 @@ router.post('/ingresar', function (req, res, next) {
     .catch(err => res.status(err.code).json(err));
 });
 
+/* (PUT) Editar funciones */
+router.put('/editar/:id', function (req, res, next) {
+  Funciones_Controller.editar_funcion(req.params.id, req.body)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
+/* (DELETE) Eliminar funciones por su ID */
+router.delete('/eliminar/:id', function (req, res, next) {
+  Funciones_Controller.eliminar_funcion(req.params.id)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
+
 /* VIEWS EJS */
 
 /* (GET) */

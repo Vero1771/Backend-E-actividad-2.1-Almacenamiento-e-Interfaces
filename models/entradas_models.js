@@ -3,17 +3,13 @@ const pool = require('../db/connection_db');
 class EntradasModel {
   static _validarDatos(entrada) {
     const errors = [];
-    const camposObligatorios = ['id_venta', 'id_funcion', 'asiento', 'precio'];
+    const camposObligatorios = ['id_venta', 'id_funcion', 'id_asiento', 'precio'];
     for (const campo of camposObligatorios) {
       if (entrada[campo] === undefined || entrada[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
     }
 
-    if (typeof (entrada.asiento) !== "string") {
-      errors.push("El nombre del asiento debe ser una cadena de texto");
-    }
-
-    if (isNaN(entrada.id_venta) || entrada.id_venta < 0 || isNaN(entrada.id_funcion) || entrada.id_funcion < 0) {
-      errors.push("El id de la venta, el id de la función deben ser números válidos");
+    if (isNaN(entrada.id_venta) || entrada.id_venta < 0 || isNaN(entrada.id_funcion) || entrada.id_funcion < 0 || isNaN(entrada.id_asiento) || entrada.id_asiento < 0) {
+      errors.push("El id de la venta, el id de la función, y el id del asiento deben ser números válidos");
     }
 
     if (isNaN(entrada.precio) || entrada.precio < 0) {
@@ -57,6 +53,39 @@ class EntradasModel {
       pool.query('INSERT INTO `entradas` SET ?', entrada)
         .then(([rows]) => {
           resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static editar_entrada(id, actualizar) {
+    return new Promise((resolve, reject) => {
+      const error = EntradasModel._validarDatos(actualizar);
+      if (error.length > 0) {
+        reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
+        return;
+      }
+      pool.query('UPDATE `entradas` SET ? WHERE `id_entrada`= ?', [actualizar, id])
+        .then(([rows]) => {
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+          }
+          resolve({ code: 404, message: "no hay entradas registradas con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static eliminar_entrada(id) {
+    return new Promise((resolve, reject) => {
+      pool.query('DELETE FROM `entradas` WHERE `id_entrada` = ?', id)
+        .then(([rows]) => {
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+          }
+          resolve({ code: 404, message: "no hay entradas registradas con ese ID", result: rows })
         })
         .catch(err =>
           reject({ code: 500, message: err.message, result: [err] })

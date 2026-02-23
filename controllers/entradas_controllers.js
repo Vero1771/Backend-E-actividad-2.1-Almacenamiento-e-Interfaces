@@ -10,6 +10,12 @@ class EntradasController {
   static ingresar_entrada(entrada) {
     return Entradas_Model.ingresar_entrada(entrada).then(r => r).catch(err => err);
   }
+  static editar_entrada(id, actualizar) {
+    return Entradas_Model.editar_entrada(id, actualizar).then(r => r).catch(err => err);
+  }
+  static eliminar_entrada(id) {
+    return Entradas_Model.eliminar_entrada(id).then(r => r).catch(err => err);
+  }
 }
 
 module.exports = EntradasController;

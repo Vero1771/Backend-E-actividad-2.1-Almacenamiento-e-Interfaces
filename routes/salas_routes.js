@@ -23,4 +23,18 @@ router.post('/ingresar', (req, res) => {
 		.catch(err => res.status(err.code).json(err));
 });
 
+/* (PUT) Editar salas */
+router.put('/editar/:id', function (req, res, next) {
+  Salas_Controller.editar_sala(req.params.id, req.body)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
+/* (DELETE) Eliminar salas por su ID */
+router.delete('/eliminar/:id', function (req, res, next) {
+  Salas_Controller.eliminar_sala(req.params.id)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
 module.exports = router;

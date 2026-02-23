@@ -111,6 +111,39 @@ class VentasModel {
         );
     });
   }
+  static editar_venta(id, actualizar) {
+    return new Promise((resolve, reject) => {
+       const error = VentasModel._validarDatos(actualizar);
+      if (error.length > 0) {
+        reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
+        return;
+      }
+      pool.query('UPDATE `ventas` SET ? WHERE `id_venta`= ?', [actualizar, id])
+        .then(([rows]) => {
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+          }
+          resolve({ code: 404, message: "no hay ventas registradas con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static eliminar_venta(id) {
+    return new Promise((resolve, reject) => {
+      pool.query('DELETE FROM `ventas` WHERE `id_venta` = ?', id)
+        .then(([rows]) => {
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+          }
+          resolve({ code: 404, message: "no hay ventas registradas con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
 }
 
 module.exports = VentasModel;

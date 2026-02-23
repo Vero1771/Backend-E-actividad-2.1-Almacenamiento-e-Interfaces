@@ -126,30 +126,57 @@ class PeliculasModel {
   }
   static editar_pelicula(id, actualizar, categorias) {
     return new Promise(async (resolve, reject) => {
+      let connection;
       try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // validar datos
         const errores = PeliculasModel._validarDatos(actualizar);
         if (errores.length > 0) {
-          return reject({ code: 400, message: "Datos inválidos", result: errores });
+          throw { code: 400, message: "Datos inválidos", result: errores };
         }
 
-        // Actualizar tabla principal
-        await pool.query('UPDATE peliculas SET ? WHERE id_pelicula = ?', [actualizar, id]);
+        // Actualizar la tabla de peliculas
+        const [updateResult] = await connection.query(
+          'UPDATE peliculas SET ? WHERE id_pelicula = ?',
+          [actualizar, id]
+        );
 
-        // Eliminar categorías anteriores
-        await pool.query('DELETE FROM peliculas_categorias WHERE id_pelicula = ?', [id]);
+        // Si no se afectó ninguna fila, el ID no existe
+        if (updateResult.affectedRows === 0) {
+          throw { code: 404, message: "No se encontró ninguna película con ese ID", result: [] };
+        }
 
-        // Insertar  nuevas categorías (si existen)
+        // Quitar las categorías viejas
+        await connection.query('DELETE FROM peliculas_categorias WHERE id_pelicula = ?', [id]);
+
+        // Insertar las nuevas categorías (si existen)
         if (categorias && categorias.length > 0) {
           const categorias_insert = categorias.map(id_cat => [id, id_cat]);
-          await pool.query(
+          await connection.query(
             'INSERT INTO peliculas_categorias (id_pelicula, id_categoria) VALUES ?',
             [categorias_insert]
           );
         }
 
-        resolve({ code: 200, message: "Película y categorías actualizadas con éxito", result: [] });
+        await connection.commit(); // Confirmar cambios
+
+        resolve({
+          code: 200,
+          message: "Película y categorías actualizadas con éxito",
+          result: updateResult
+        });
+
       } catch (err) {
-        reject({ code: 500, message: err.message, result: [err] });
+        if (connection) await connection.rollback(); // Revertir si algo falla
+        reject({
+          code: err.code || 500,
+          message: err.message || "Error al editar la película",
+          result: err.result || [err]
+        });
+      } finally {
+        if (connection) connection.release();
       }
     });
   }

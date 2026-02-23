@@ -1,19 +1,67 @@
 const pool = require('../db/connection_db');
 
 class VentasProductosModel {
-  static _validarDatos(producto) {
+  static _validarDatosVenta(venta) {
     const errors = [];
-    const camposObligatorios = ['id_producto', 'id_venta', 'cantidad'];
+    const camposObligatorios = ['id_metodo', 'total', 'fecha'];
+    for (const campo of camposObligatorios) {
+      if (venta[campo] === undefined || venta[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
+    }
+
+    if (isNaN(venta.id_metodo) || venta.id_metodo < 0 || isNaN(venta.total) || venta.total < 0) {
+      errors.push("El total de la venta y el id del método de pago deben ser números válidos");
+    }
+
+    const fecha = new Date(venta.fecha);
+
+    if (isNaN(fecha.getTime())) {
+      errors.push("Verifique el formato de la fecha");
+    }
+
+    return errors;
+  }
+  static _validarDatosVentasProductos(productos) { //Validar varios productos
+    const errors = [];
+    let errors_details = [];
+    const camposObligatorios = ['id_producto', 'cantidad', 'subtotal'];
+    productos.forEach((p, i) => {
+      for (const campo of camposObligatorios) {
+        if (p[campo] === undefined || p[campo] === null) errors_details.push(`El campo ${campo} es obligatorio`);
+      }
+
+      if (isNaN(p.id_producto) || p.id_producto < 0) {
+        errors_details.push("El id del producto deben ser un número válido");
+      }
+
+      if (isNaN(p.cantidad) || p.cantidad < 0 || isNaN(p.subtotal) || p.subtotal < 0) {
+        errors.push("El subtotal y la cantidad deben ser un números válidos y no puede ser negativos");
+      }
+
+      if (errors_details.length > 0) {
+        errors.push({
+          id_list_producto: i,
+          producto: p,
+          errors_details: errors_details
+        })
+        errors_details = [];
+      }
+    })
+
+    return errors;
+  }
+  static _validarDatosProducto(producto) { //Validar un solo producto
+    const errors = [];
+    const camposObligatorios = ['id_producto', 'cantidad', 'subtotal'];
     for (const campo of camposObligatorios) {
       if (producto[campo] === undefined || producto[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
     }
 
-    if (isNaN(producto.id_producto) || producto.id_producto < 0 || isNaN(producto.id_venta) || producto.id_venta < 0) {
-      errors.push("El id de la venta, el id del producto deben ser números válidos");
+    if (isNaN(producto.id_producto) || producto.id_producto < 0) {
+      errors.push("El id del producto debe ser un número válido");
     }
 
-    if (isNaN(producto.cantidad) || producto.cantidad < 0) {
-      errors.push("La cantidad debe ser un número válido y no puede ser negativa");
+    if (isNaN(producto.cantidad) || producto.cantidad < 0 || isNaN(producto.subtotal) || producto.subtotal < 0) {
+      errors.push("El subtotal y la cantidad deben ser un números válidos y no puede ser negativos");
     }
 
     return errors;
@@ -43,16 +91,86 @@ class VentasProductosModel {
         );
     });
   }
-  static ingresar_producto_vendido(producto) {
+  static ingresar_producto_vendido(venta, venta_producto) {
+    return new Promise(async (resolve, reject) => {
+      let connection;
+      try {
+        // Obtener la conexión de la base de datos para manejar la transacción
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // Validar datos 
+        const error1 = VentasProductosModel._validarDatosVenta(venta);
+        const error2 = VentasProductosModel._validarDatosVentasProductos(venta_producto);
+        const errores = [...error1, ...error2];
+        if (errores.length > 0) {
+          throw { code: 400, message: "Datos de venta inválidos", result: errores };
+        }
+
+        // Insertar la venta principal
+        const [ventaResult] = await connection.query('INSERT INTO `ventas` SET ?', venta);
+        const nuevaVentaId = ventaResult.insertId;
+
+        // Insertar referencia de la venta
+        if (venta_producto && venta_producto.length > 0) {
+          const valoresVentas = venta_producto.map(v => [nuevaVentaId, v.id_producto, v.cantidad, v.subtotal]);
+          await connection.query(
+            'INSERT INTO `ventas_productos` ( `id_venta`, `id_producto`, `cantidad`, subtotal) VALUES ?',
+            [valoresVentas]
+          );
+        }
+
+        // Confirmar cambios
+        await connection.commit();
+
+        resolve({
+          code: 201,
+          message: "Venta registrada con éxito",
+          result: { id_venta: nuevaVentaId }
+        });
+
+      } catch (err) {
+        // Si algo falla, deshacemos todo lo anterior
+        if (connection) await connection.rollback();
+
+        reject({
+          code: err.code || 500,
+          message: err.message || "Error al registrar la venta",
+          result: err.result || [err]
+        });
+      } finally {
+        // Liberar la conexión de vuelta al pool
+        if (connection) connection.release();
+      }
+    });
+  }
+  static editar_producto_vendido(id, actualizar) {
     return new Promise((resolve, reject) => {
-      const error = VentasProductosModel._validarDatos(producto);
+      const error = VentasProductosModel._validarDatosProducto(actualizar);
       if (error.length > 0) {
         reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
         return;
       }
-      pool.query('INSERT INTO `ventas_productos` SET ?', producto)
+      pool.query('UPDATE `ventas_productos` SET ? WHERE `id_venta_producto`= ?', [actualizar, id])
         .then(([rows]) => {
-          resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+          }
+          resolve({ code: 404, message: "no hay ventas registradas con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static eliminar_producto_vendido(id) {
+    return new Promise((resolve, reject) => {
+      pool.query('DELETE FROM `ventas_productos` WHERE `id_venta_producto` = ?', id)
+        .then(([rows]) => {
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+          }
+          resolve({ code: 404, message: "no hay ventas registradas con ese ID", result: rows })
         })
         .catch(err =>
           reject({ code: 500, message: err.message, result: [err] })

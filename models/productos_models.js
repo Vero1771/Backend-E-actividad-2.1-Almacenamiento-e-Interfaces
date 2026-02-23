@@ -68,7 +68,10 @@ class ProductosModel {
       }
       pool.query('UPDATE `productos` SET ? WHERE `id_producto`= ?', [actualizar, id])
         .then(([rows]) => {
-          resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+          }
+          resolve({ code: 404, message: "no hay productos registrados con ese ID", result: rows })
         })
         .catch(err =>
           reject({ code: 500, message: err.message, result: [err] })

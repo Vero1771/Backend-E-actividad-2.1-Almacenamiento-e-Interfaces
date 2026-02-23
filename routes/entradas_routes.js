@@ -24,4 +24,18 @@ router.post('/ingresar', (req, res) => {
 		.catch(err => res.status(err.code).json(err));
 });
 
+/* (PUT) Editar entradas */
+router.put('/editar/:id', function (req, res, next) {
+  Entradas_Controller.editar_entrada(req.params.id, req.body)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
+/* (DELETE) Eliminar entradas por su ID */
+router.delete('/eliminar/:id', function (req, res, next) {
+  Entradas_Controller.eliminar_entrada(req.params.id)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
 module.exports = router;

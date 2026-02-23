@@ -72,6 +72,39 @@ class FuncionesModel {
         );
     });
   }
+  static editar_funcion(id, actualizar) {
+    return new Promise((resolve, reject) => {
+      const error = FuncionesModel._validarDatos(actualizar);
+      if (error.length > 0) {
+        reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
+        return;
+      }
+      pool.query('UPDATE `funciones` SET ? WHERE `id_funcion`= ?', [actualizar, id])
+        .then(([rows]) => {
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
+          }
+          resolve({ code: 404, message: "no hay funciones registradas con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
+  static eliminar_funcion(id) {
+    return new Promise((resolve, reject) => {
+      pool.query('DELETE FROM `funciones` WHERE `id_funcion` = ?', id)
+        .then(([rows]) => {
+          if (rows.affectedRows > 0) {
+            resolve({ code: 200, message: "consulta completada con éxito", result: rows })
+          }
+          resolve({ code: 404, message: "no hay funciones registradas con ese ID", result: rows })
+        })
+        .catch(err =>
+          reject({ code: 500, message: err.message, result: [err] })
+        );
+    });
+  }
 }
 
 module.exports = FuncionesModel;

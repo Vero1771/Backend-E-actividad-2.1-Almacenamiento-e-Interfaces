@@ -18,9 +18,25 @@ router.get('/buscar/:id', (req, res) => {
 
 /* (POST) Ingresar productos vendidos */
 router.post('/ingresar', function (req, res, next) {
-  Ventas_Productos_Controller.ingresar_producto_vendido(req.body)
+	const { productos = [], ...datosVenta } = req.body;
+
+  Ventas_Productos_Controller.ingresar_producto_vendido(datosVenta, productos)
 		.then(r => res.status(r.code).json(r))
 		.catch(err => res.status(err.code).json(err));
+});
+
+/* (PUT) Editar productos vendidos  */
+router.put('/editar/:id', function (req, res, next) {
+  Ventas_Productos_Controller.editar_producto_vendido(req.params.id, req.body)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
+/* (DELETE) Eliminar productos vendidos por su ID */
+router.delete('/eliminar/:id', function (req, res, next) {
+  Ventas_Productos_Controller.eliminar_producto_vendido(req.params.id)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
 });
 
 module.exports = router;

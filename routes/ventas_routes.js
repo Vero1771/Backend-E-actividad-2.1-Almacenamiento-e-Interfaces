@@ -30,4 +30,19 @@ router.post('/ingresar', function (req, res, next) {
     .catch(err => res.status(err.code).json(err));
 });
 
+/* (PUT) Editar ventas */
+router.put('/editar/:id', function (req, res, next) {
+  Ventas_Controller.editar_venta(req.params.id, req.body)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
+/* (DELETE) Eliminar ventas por su ID */
+router.delete('/eliminar/:id', function (req, res, next) {
+  Ventas_Controller.eliminar_venta(req.params.id)
+    .then(r => res.status(r.code).json(r))
+    .catch(err => res.status(err.code).json(err));
+});
+
+
 module.exports = router;
