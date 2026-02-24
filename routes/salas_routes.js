@@ -37,4 +37,32 @@ router.delete('/eliminar/:id', function (req, res, next) {
     .catch(err => res.status(err.code).json(err));
 });
 
+/* VIEWS EJS */
+
+/* (GET) Todas las salas */
+router.get('/', function (req, res, next) {
+  Salas_Controller.mostrar_salas()
+    .then((r) => {
+      res.render('./salas_views/salas', { title: 'Salas', salas_list: r.result });
+    })
+    .catch(err => res.status(err.code).json(err));
+});
+
+/* (POST) */
+router.get('/ingresar', function (req, res, next) {
+  res.render('./salas_views/ingresar_salas', { title: 'Salas' });
+});
+
+/* (PUT) Mostrar formulario de edición */
+router.get('/actualizar/:id', function (req, res, next) {
+  Salas_Controller.mostrar_salas_por_id(req.params.id)
+    .then((r) => {
+      res.render('./salas_views/editar_salas', {
+        title: 'Editar Sala',
+        sala: r.result[0]
+      });
+    })
+    .catch(err => res.status(err.code).json(err));
+});
+
 module.exports = router;

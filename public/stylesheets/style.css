@@ -8,10 +8,6 @@ body {
   min-height: 100vh;
 }
 
-a {
-  color: #00B7FF;
-}
-
 /* Estilos del nav y el footer */
 
 nav, footer{
@@ -23,7 +19,6 @@ nav, footer{
 nav ul {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
   align-items: center;
 
   a {
@@ -35,6 +30,10 @@ nav ul {
     border-radius: 5px;
   }
 
+  a:hover {
+    color: #ff9900;
+  }
+
 }
 
 ul{
@@ -44,6 +43,51 @@ ul{
 footer{
   text-align: center;
   margin-top: 5px;
+}
+
+/* Estilos del nav desplegable */
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  background-color: #000;
+  padding: 10px;
+}
+
+.nav-list a, .nav-list span {
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: relative;
+}
+
+/* Ocultar el submenú por defecto */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #000;;
+  min-width: 160px;
+  list-style: none;
+  padding: 10px;
+  z-index: 1; /* Para que las opciones aparezcan encima de otros elementos */
+}
+
+/* Mostrar el submenú */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Estilo para los links dentro del desplegable */
+.dropdown-content li {
+  padding: 5px 0;
+}
+
+.dropdown-content a:hover {
+  color: #ff9900; 
 }
 
 /* Estilo de main */
