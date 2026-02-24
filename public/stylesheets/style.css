@@ -177,3 +177,8 @@ input[type="submit"] {
 .opcion__eliminar:hover {
   background-color: #333;
 }
+
+.in__line{
+  display: flex;
+  flex-direction: row;
+}

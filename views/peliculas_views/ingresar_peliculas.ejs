@@ -21,41 +21,39 @@
           <input type="number" name="duracion" required>
         </label><br>
 
-        <label id="clasificacion">Clasificación
-          <input type="text" name="clasificacion" required>
-        </label><br>
-
         <div>
-          <label id="clasificacion">Categoría</label><br>
+          <label id="id_clasificacion">Clasificación</label><br>
+            <% if(clasificaciones_list.length > 0) { %>
+              <% clasificaciones_list.forEach((cl, i) => { %>
 
-            <label>
-              Acción
-              <input type="checkbox" value="Acción" name="categoria">
-            </label><br>
+                <label>
+                  <%= cl.nombre %>
+                  <input type="radio" value="<%= cl.id_clasificacion %>" name="id_clasificacion">
+                </label><br>
 
-            <label>
-              Aventura
-              <input type="checkbox" value="Aventura" name="categoria">
-            </label><br>
-
-            <label>
-              Ciencia Ficción
-              <input type="checkbox" value="Ciencia Ficción" name="categoria">
-            </label><br>
-
-            <label>
-              Comedia
-              <input type="checkbox" value="Comedia" name="categoria">
-            </label><br>
-            
-            <label>
-              Drama
-              <input type="checkbox" value="Drama" name="categoria">
-            </label><br>
-
+              <% }); %>
+            <% } else { %>
+              <p>No hay Clasificaciones para asignar</p>
+            <% } %>
         </div>
 
-        <input type="submit" name="Ingresar">
+        <div>
+          <label id="categorias">Categorías</label><br>
+            <% if(categorias_list.length > 0) { %>
+              <% categorias_list.forEach((c, i) => { %>
+
+                <label>
+                  <%= c.nombre %>
+                  <input type="checkbox" value="<%= c.id_categoria %>" name="categorias">
+                </label><br>
+
+              <% }); %>
+            <% } else { %>
+              <p>No hay Categorías para asignar</p>
+            <% } %>
+        </div>
+
+        <input type="submit">
 
       </form>
     </main>

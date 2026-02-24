@@ -4,7 +4,7 @@
     <main>
       <h1><%= title %>: <%= peli.titulo %></h1>
 
-      <form class="formEntidad" action="/peliculas/editar/<%= peli.id %>?_method=PUT" method="post">
+      <form class="formEntidad" action="/peliculas/editar/<%= peli.id_pelicula %>?_method=PUT" method="post">
           <label>Título
               <input type="text" name="titulo" value="<%= peli.titulo %>" required>
           </label><br>
@@ -17,43 +17,38 @@
               <input type="number" name="duracion" value="<%= peli.duracion %>" required>
           </label><br>
 
-          <label id="clasificacion">Clasificación
-            <input type="text" value="<%= peli.clasificacion %>" name="clasificacion" required>
-          </label><br>
+          <div>
+            <label id="id_clasificacion">Clasificación</label><br>
+              <% if(clasificaciones_list.length > 0) { %>
+                <% clasificaciones_list.forEach((cl, i) => { %>
+
+                  <label>
+                    <%= cl.nombre %>
+                    <input type="radio" value="<%= cl.id_clasificacion %>" name="id_clasificacion"
+                    <%= cl.id_clasificacion == peli.id_clasificacion ? 'checked' : '' %>>
+                  </label><br>
+
+                <% }); %>
+              <% } else { %>
+                <p>No hay Clasificaciones para asignar</p>
+              <% } %>
+          </div>
 
           <div>
-            <label id="clasificacion">Categoría</label><br>
+            <label id="categorias">Categorías</label><br>
+              <% if(categorias_list.length > 0) { %>
+                <% categorias_list.forEach((c, i) => { %>
 
-              <label>
-                Acción
-                <input type="checkbox" value="Acción" name="categoria" 
-                <%= peli.categoria.includes('Acción') ? 'checked' : '' %>>
-              </label><br>
+                  <label>
+                    <%= c.nombre %>
+                    <input type="checkbox" value="<%= c.id_categoria %>" name="categorias"
+                    <%= peli.categorias.some(peliCat => peliCat.id_categoria === c.id_categoria) ? 'checked' : '' %>>
+                  </label><br>
 
-              <label>
-                Aventura
-                <input type="checkbox" value="Aventura" name="categoria" 
-                <%= peli.categoria.includes('Aventura') ? 'checked' : '' %>>
-              </label><br>
-
-              <label>
-                Ciencia Ficción
-                <input type="checkbox" value="Ciencia Ficción" name="categoria"
-                <%= peli.categoria.includes('Ciencia Ficción') ? 'checked' : '' %>>
-              </label><br>
-
-              <label>
-                Comedia
-                <input type="checkbox" value="Comedia" name="categoria"
-                <%= peli.categoria.includes('Comedia') ? 'checked' : '' %>>
-              </label><br>
-              
-              <label>
-                Drama
-                <input type="checkbox" value="Drama" name="categoria"
-                <%= peli.categoria.includes('Drama') ? 'checked' : '' %>>
-              </label><br>
-
+                <% }); %>
+              <% } else { %>
+                <p>No hay Categorías para asignar</p>
+              <% } %>
           </div>
 
           <input type="submit" value="Guardar Cambios">

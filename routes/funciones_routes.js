@@ -49,10 +49,11 @@ router.delete('/eliminar/:id', function (req, res, next) {
 
 /* (GET) */
 router.get('/recientes', function (req, res, next) {
-
-  const funciones_list = []
-
-  res.render('./funciones_views/funciones_recientes', { title: 'Funciones', funciones_list: funciones_list });
+  Funciones_Controller.mostrar_funciones_recientes()
+    .then((r) => {
+      res.render('./funciones_views/funciones_recientes', { title: 'Funciones', funciones_list: r.result });
+    })
+    .catch(err => res.status(err.code).json(err));
 });
 
 

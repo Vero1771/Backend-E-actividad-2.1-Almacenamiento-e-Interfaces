@@ -46,6 +46,14 @@ class PeliculasModel {
 
     return Object.values(peliculasAgrupadas);
   }
+  static _categoriasEntradaList(categorias_list) {
+    if (typeof(categorias_list) === "string") { //En caso de que llegue una categoría por el checkbox
+      categorias_list = [categorias_list];
+    } else if (!categorias_list) {
+      categorias_list = []; // En caso de que no se marque ninguna
+    }
+    return categorias_list;
+  }
   static mostrar_peliculas() {
     return new Promise((resolve, reject) => {
       pool.query('SELECT peliculas.id_pelicula, peliculas.titulo, peliculas.anio, peliculas.duracion, clasificacion_peliculas.id_clasificacion, clasificacion_peliculas.nombre AS clasificacion, categorias.id_categoria, categorias.nombre AS nombre_categoria FROM `peliculas` LEFT JOIN `clasificacion_peliculas` ON peliculas.id_clasificacion = clasificacion_peliculas.id_clasificacion LEFT JOIN `peliculas_categorias` ON peliculas.id_pelicula = peliculas_categorias.id_pelicula LEFT JOIN `categorias` ON categorias.id_categoria = peliculas_categorias.id_categoria ORDER BY peliculas.id_pelicula;')
@@ -86,6 +94,8 @@ class PeliculasModel {
         if (errores.length > 0) {
           throw { code: 400, message: "Datos de película inválidos", result: errores };
         }
+
+        categorias = PeliculasModel._categoriasEntradaList(categorias);
 
         // Insertar la película
         const [peliResult] = await connection.query('INSERT INTO `peliculas` SET ?', peli);
@@ -136,6 +146,8 @@ class PeliculasModel {
         if (errores.length > 0) {
           throw { code: 400, message: "Datos inválidos", result: errores };
         }
+
+        categorias = PeliculasModel._categoriasEntradaList(categorias);
 
         // Actualizar la tabla de peliculas
         const [updateResult] = await connection.query(

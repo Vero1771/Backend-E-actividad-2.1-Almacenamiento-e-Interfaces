@@ -21,9 +21,9 @@
           <tbody>
               <% funciones_list.forEach((f, i) => { %>
                   <tr>
-                    <td><%= f.pelicula %></td>
-                    <td><%= f.sala %></td>
-                    <td><%= f.fecha_hora %></td>
+                    <td><%= f.titulo %></td>
+                    <td><%= f.nombre %></td>
+                    <td><%= f.fecha_hora.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) %></td>
                   </tr>
               <% }); %>
           </tbody>

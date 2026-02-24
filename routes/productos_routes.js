@@ -41,8 +41,11 @@ router.delete('/eliminar/:id', function (req, res, next) {
 
 /* (GET) */
 router.get('/', function (req, res, next) {
-  const productos_list = Productos_Controller.mostrar_productos();
-  res.render('./productos_views/productos', { title: 'Productos', productos_list: productos_list.result });
+  Productos_Controller.mostrar_productos()
+    .then((r) => {
+      res.render('./productos_views/productos', { title: 'Productos', productos_list: r.result });
+    })
+    .catch(err => res.status(err.code).json(err));
 });
 
 /* (POST) */
@@ -52,11 +55,14 @@ router.get('/ingresar', function (req, res, next) {
 
 /* (PUT) Mostrar formulario de edición */
 router.get('/actualizar/:id', function (req, res, next) {
-  const result = Productos_Controller.mostrar_productos_por_id(req.params.id);
-  res.render('./productos_views/editar_productos', {
-    title: 'Editar Producto',
-    product: result.result
-  });
+  Productos_Controller.mostrar_productos_por_id(req.params.id)
+    .then((r) => {
+      res.render('./productos_views/editar_productos', {
+        title: 'Editar Producto',
+        product: r.result[0]
+      });
+    })
+    .catch(err => res.status(err.code).json(err));
 });
 
 module.exports = router;

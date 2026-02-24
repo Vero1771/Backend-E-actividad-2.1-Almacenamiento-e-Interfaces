@@ -2,7 +2,7 @@
 
   <body>
     <%-include("../components/nav.ejs")%>
-    <main>
+      <main>
         <h1>Ingresar <%= title %>
         </h1>
 
@@ -20,10 +20,20 @@
             <input type="number" name="precio_unitario" required>
           </label><br>
 
-          <input type="submit" name="Ingresar">
+          <label id="en_stock">
+            <p>¿Está en stock?</p>
+            <div class="in__line">
+              <label for="si">Sí</label>
+              <input type="radio" id="si" name="en_stock" value="1">
+              <label for="no">No</label>
+              <input type="radio" id="no" name="en_stock" value="0" checked>
+            </div>
+          </label><br>
+
+          <input type="submit">
 
         </form>
-    </main>
+      </main>
   </body>
 
   <%-include("../components/footer.ejs")%>
