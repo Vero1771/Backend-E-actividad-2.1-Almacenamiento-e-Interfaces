@@ -43,8 +43,11 @@
         <div>
           <label for="fecha_hora">Fecha y Hora de la Función</label><br>
           <% 
-            // Formateamos la fecha al formato requerido: YYYY-MM-DDTHH:mm
-            const fechaFormateada = new Date(funcion.fecha_hora).toISOString().slice(0, 16); 
+            const fechaObjeto = new Date(funcion.fecha_hora);
+            
+            fechaObjeto.setMinutes(fechaObjeto.getMinutes() - fechaObjeto.getTimezoneOffset());
+              
+            const fechaFormateada = fechaObjeto.toISOString().slice(0, 16);
           %>
           <input type="datetime-local" 
                 id="fecha_hora" 

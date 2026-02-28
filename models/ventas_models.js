@@ -97,6 +97,10 @@ class VentasModel {
   }
   static ingresar_venta(venta) {
     return new Promise((resolve, reject) => {
+
+      // Obtener la fecha actual
+      venta.fecha = new Date();
+      
       const error = VentasModel._validarDatos(venta);
       if (error.length > 0) {
         reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })

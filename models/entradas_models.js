@@ -1,15 +1,15 @@
 const pool = require('../db/connection_db');
 
 class EntradasModel {
-  static _validarDatos(entrada) {
+  static _validarDatosEntrada(entrada) { //Validar una entrada
     const errors = [];
-    const camposObligatorios = ['id_venta', 'id_funcion', 'id_asiento', 'precio'];
+    const camposObligatorios = ['id_funcion', 'id_asiento', 'precio'];
     for (const campo of camposObligatorios) {
       if (entrada[campo] === undefined || entrada[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
     }
 
-    if (isNaN(entrada.id_venta) || entrada.id_venta < 0 || isNaN(entrada.id_funcion) || entrada.id_funcion < 0 || isNaN(entrada.id_asiento) || entrada.id_asiento < 0) {
-      errors.push("El id de la venta, el id de la función, y el id del asiento deben ser números válidos");
+    if (isNaN(entrada.id_funcion) || entrada.id_funcion < 0 || isNaN(entrada.id_asiento) || entrada.id_asiento < 0) {
+      errors.push("El id de la función, y el id del asiento deben ser números válidos");
     }
 
     if (isNaN(entrada.precio) || entrada.precio < 0) {
@@ -17,6 +17,65 @@ class EntradasModel {
     }
 
     return errors;
+  }
+  static _validarDatosEntradas(entradas) { //Validar varias entradas
+    const errors = [];
+    let errors_details = [];
+    const camposObligatorios = ['id_funcion', 'id_asiento', 'precio'];
+
+    entradas.forEach((entrada, i) => {
+
+      for (const campo of camposObligatorios) {
+        if (entrada[campo] === undefined || entrada[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
+      }
+
+      if (isNaN(entrada.id_funcion) || entrada.id_funcion < 0 || isNaN(entrada.id_asiento) || entrada.id_asiento < 0) {
+        errors.push("El id de la función, y el id del asiento deben ser números válidos");
+      }
+
+      if (isNaN(entrada.precio) || entrada.precio < 0) {
+        errors.push("El precio debe ser un número válido");
+      }
+
+      if (errors_details.length > 0) {
+        errors.push({
+          id_list_producto: i,
+          producto: e,
+          errors_details: errors_details
+        })
+        errors_details = [];
+      }
+    })
+
+    return errors;
+  }
+  static _validarDatosVenta(venta) {
+    const errors = [];
+    const camposObligatorios = ['id_metodo', 'fecha'];
+    for (const campo of camposObligatorios) {
+      if (venta[campo] === undefined || venta[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
+    }
+
+    if (isNaN(venta.id_metodo) || venta.id_metodo < 0) {
+      errors.push("El id del método de pago debe ser un número válido");
+    }
+
+    const fecha = new Date(venta.fecha);
+
+    if (isNaN(fecha.getTime())) {
+      errors.push("Verifique el formato de la fecha");
+    }
+
+    return errors;
+  }
+  static _calcularTotalVenta(entradas) {
+    let total = 0;
+    
+    entradas.forEach((entrada) => {
+      total += entrada.precio;
+    })
+
+    return total;
   }
   static mostrar_entradas() {
     return new Promise((resolve, reject) => {
@@ -43,25 +102,58 @@ class EntradasModel {
         );
     });
   }
-  static ingresar_entrada(entrada) {
-    return new Promise((resolve, reject) => {
-      const error = EntradasModel._validarDatos(entrada);
-      if (error.length > 0) {
-        reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
-        return;
-      }
-      pool.query('INSERT INTO `entradas` SET ?', entrada)
-        .then(([rows]) => {
-          resolve({ code: 200, message: "consulta completada con éxito", result: [rows] })
-        })
-        .catch(err =>
-          reject({ code: 500, message: err.message, result: [err] })
+  static ingresar_entradas(venta, entradas) {
+    return new Promise(async (resolve, reject) => {
+      let connection;
+      try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // Obtener la fecha actual
+        venta.fecha = new Date();
+
+        // Validar datos 
+        const error1 = EntradasModel._validarDatosVenta(venta);
+        const error2 = EntradasModel._validarDatosEntradas(entradas);
+        const errores = [...error1, ...error2];
+        if (errores.length > 0) {
+          throw { code: 400, message: "Datos de venta inválidos", result: errores };
+        }
+
+        // Calcular el total
+        venta.total = EntradasModel._calcularTotalVenta(entradas);
+
+        // Insertar la venta principal
+        const [resVenta] = await connection.query('INSERT INTO ventas SET ?', venta);
+        const idVenta = resVenta.insertId;
+
+        // Ingresar las entradas
+        const valoresEntradas = entradas.map(e => [
+          idVenta,
+          e.id_funcion,
+          e.id_asiento,
+          e.precio
+        ]);
+
+        await connection.query(
+          'INSERT INTO entradas (id_venta, id_funcion, id_asiento, precio) VALUES ?',
+          [valoresEntradas]
         );
+
+        await connection.commit();
+        resolve({ code: 201, message: "Entradas vendidas con éxito", result: { id_venta: idVenta } });
+
+      } catch (err) {
+        if (connection) await connection.rollback();
+        reject({ code: 500, message: err.message });
+      } finally {
+        if (connection) connection.release();
+      }
     });
   }
   static editar_entrada(id, actualizar) {
     return new Promise((resolve, reject) => {
-      const error = EntradasModel._validarDatos(actualizar);
+      const error = EntradasModel._validarDatosEntrada(actualizar);
       if (error.length > 0) {
         reject({ code: 400, message: "Ha ocurrido un problema al ingresar los datos", result: error })
         return;

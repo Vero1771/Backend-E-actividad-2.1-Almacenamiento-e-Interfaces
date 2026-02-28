@@ -3,13 +3,13 @@ const pool = require('../db/connection_db');
 class VentasProductosModel {
   static _validarDatosVenta(venta) {
     const errors = [];
-    const camposObligatorios = ['id_metodo', 'total', 'fecha'];
+    const camposObligatorios = ['id_metodo', 'fecha'];
     for (const campo of camposObligatorios) {
       if (venta[campo] === undefined || venta[campo] === null) errors.push(`El campo ${campo} es obligatorio`);
     }
 
-    if (isNaN(venta.id_metodo) || venta.id_metodo < 0 || isNaN(venta.total) || venta.total < 0) {
-      errors.push("El total de la venta y el id del método de pago deben ser números válidos");
+    if (isNaN(venta.id_metodo) || venta.id_metodo < 0) {
+      errors.push("El id del método de pago debe ser un número válido");
     }
 
     const fecha = new Date(venta.fecha);
@@ -66,9 +66,18 @@ class VentasProductosModel {
 
     return errors;
   }
+  static _calcularTotalVenta(productos) {
+    let total = 0;
+
+    productos.forEach((producto) => {
+      total += producto.subtotal;
+    })
+
+    return total;
+  }
   static mostrar_productos_vendidos() {
     return new Promise((resolve, reject) => {
-      pool.query('SELECT ventas_productos.id_venta_producto, productos.id_producto, productos.nombre AS "producto", productos.precio_unitario, ventas_productos.cantidad, ventas.id_venta, metodos_pago.nombre AS "metodo_pago", ventas.fecha FROM `ventas_productos` JOIN `productos` ON productos.id_producto = ventas_productos.id_producto JOIN `ventas` ON ventas.id_venta = ventas_productos.id_venta JOIN `metodos_pago` ON metodos_pago.id_metodo = ventas.id_metodo ORDER BY ventas_productos.id_venta_producto;')
+      pool.query('SELECT ventas_productos.id_venta_producto, productos.id_producto, productos.nombre AS "producto", productos.precio_unitario, ventas_productos.cantidad, ventas.id_venta, metodos_pago.nombre AS "metodo_pago", ventas.fecha, ventas.total FROM `ventas_productos` JOIN `productos` ON productos.id_producto = ventas_productos.id_producto JOIN `ventas` ON ventas.id_venta = ventas_productos.id_venta JOIN `metodos_pago` ON metodos_pago.id_metodo = ventas.id_metodo ORDER BY ventas_productos.id_venta_producto;')
         .then(([rows]) => {
           resolve({ code: 200, message: "consulta completada con éxito", result: rows })
         })
@@ -79,7 +88,7 @@ class VentasProductosModel {
   }
   static mostrar_productos_vendidos_por_id(id) {
     return new Promise((resolve, reject) => {
-      pool.query('SELECT ventas_productos.id_venta_producto, productos.id_producto, productos.nombre AS "producto", productos.precio_unitario, ventas_productos.cantidad, ventas.id_venta, metodos_pago.nombre AS "metodo_pago", ventas.fecha FROM `ventas_productos` JOIN `productos` ON productos.id_producto = ventas_productos.id_producto JOIN `ventas` ON ventas.id_venta = ventas_productos.id_venta JOIN `metodos_pago` ON metodos_pago.id_metodo = ventas.id_metodo WHERE id_venta_producto = ?', id)
+      pool.query('SELECT ventas_productos.id_venta_producto, productos.id_producto, productos.nombre AS "producto", productos.precio_unitario, ventas_productos.cantidad, ventas.id_venta, metodos_pago.nombre AS "metodo_pago", ventas.fecha, ventas.total FROM `ventas_productos` JOIN `productos` ON productos.id_producto = ventas_productos.id_producto JOIN `ventas` ON ventas.id_venta = ventas_productos.id_venta JOIN `metodos_pago` ON metodos_pago.id_metodo = ventas.id_metodo WHERE id_venta_producto = ?', id)
         .then(([rows]) => {
           if (rows.length > 0) {
             resolve({ code: 200, message: "consulta completada con éxito", result: rows })
@@ -99,6 +108,9 @@ class VentasProductosModel {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
+        // Obtener la fecha actual
+        venta.fecha = new Date();
+
         // Validar datos 
         const error1 = VentasProductosModel._validarDatosVenta(venta);
         const error2 = VentasProductosModel._validarDatosVentasProductos(venta_producto);
@@ -106,6 +118,12 @@ class VentasProductosModel {
         if (errores.length > 0) {
           throw { code: 400, message: "Datos de venta inválidos", result: errores };
         }
+
+        // Obtener la fecha actual
+        venta.fecha = new Date();
+
+        // Calcular el total
+        venta.total = VentasProductosModel._calcularTotalVenta(venta_producto);
 
         // Insertar la venta principal
         const [ventaResult] = await connection.query('INSERT INTO `ventas` SET ?', venta);

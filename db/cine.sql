@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 23-02-2026 a las 02:13:48
+-- Tiempo de generación: 28-02-2026 a las 03:44:10
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `cine2`
+-- Base de datos: `cine`
 --
 
 -- --------------------------------------------------------
@@ -311,7 +311,7 @@ CREATE TABLE `productos` (
   `id_producto` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
   `cantidad` int(11) NOT NULL,
-  `precio_unitario` decimal(10,0) NOT NULL,
+  `precio_unitario` decimal(10,2) NOT NULL,
   `en_stock` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -320,11 +320,11 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`id_producto`, `nombre`, `cantidad`, `precio_unitario`, `en_stock`) VALUES
-(1, 'cotufas', 50, 10, 1),
-(2, 'samba', 50, 2, 1),
-(3, 'refresco', 50, 8, 1),
-(4, 'combo tequeños', 25, 5, 1),
-(5, 'cocosete', 50, 5, 1);
+(1, 'cotufas', 50, 10.00, 1),
+(2, 'samba', 50, 2.00, 1),
+(3, 'refresco', 50, 8.00, 1),
+(4, 'combo tequeños', 25, 5.00, 1),
+(5, 'cocosete', 50, 5.00, 1);
 
 -- --------------------------------------------------------
 
